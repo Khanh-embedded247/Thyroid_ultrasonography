@@ -1,0 +1,10 @@
+# Torch/Torchvision cài bằng conda theo environment.yml để tránh lỗi binary.
+pillow
+tqdm
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+gradio
+tensorboard

@@ -1,0 +1,15 @@
+# Reference config for patient-level baseline training
+metadata_csv: data/processed/patient_images.csv
+split_dir: data/processed/splits
+fold: 0
+backbone: resnet18
+pooling: mean
+image_size: 224
+batch_size: 4
+epochs: 20
+lr: 0.0001
+weight_decay: 0.0001
+threshold: 0.5
+num_workers: 4
+pretrained: false
+seed: 2026

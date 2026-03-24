@@ -32,3 +32,5 @@ runs/
 logs/
 *.log
 .tensorboard/
+ThyUS2Path/results_refactored/
+ThyUS2Path/data/processed/
