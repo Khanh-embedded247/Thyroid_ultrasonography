@@ -17,6 +17,16 @@ from typing import Dict, Iterable, List, Sequence, Tuple
 # Các đuôi ảnh được chấp nhận khi quét dữ liệu.
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".Jpg", ".JPG", ".PNG", ".JPEG"}
 
+# Cột ưu tiên cho metadata mở rộng khi gộp nhiều nguồn khác schema.
+OPTIONAL_METADATA_KEYS_PRIORITY = (
+    "dataset_name",
+    "label_source",
+    "age",
+    "sex",
+    "tirads",
+    "study_id",
+)
+
 
 @dataclass(frozen=True)
 class PatientRecord:
@@ -136,20 +146,39 @@ def build_patient_image_rows(data_root: Path) -> List[Dict[str, str]]:
                     "image_name": image_path.name,
                     "image_path": str(image_path.resolve()),
                     "label": str(label),
+                    "dataset_name": batch_name,
+                    "label_source": "pathology",
                 }
             )
     return rows
 
 
+def _ordered_metadata_fieldnames(rows: Sequence[Dict[str, str]]) -> List[str]:
+    """Sắp thứ tự cột metadata: cột bắt buộc trước, cột phụ sau."""
+
+    required = list(REQUIRED_METADATA_KEYS)
+    present_optional = set()
+    for row in rows:
+        for key in row.keys():
+            if key not in REQUIRED_METADATA_KEYS:
+                present_optional.add(key)
+
+    ordered_optional = [k for k in OPTIONAL_METADATA_KEYS_PRIORITY if k in present_optional]
+    ordered_optional.extend(sorted([k for k in present_optional if k not in OPTIONAL_METADATA_KEYS_PRIORITY]))
+    return required + ordered_optional
+
+
 def save_rows_csv(rows: Sequence[Dict[str, str]], output_csv: Path) -> None:
-    """Lưu metadata mức ảnh ra CSV."""
+    """Lưu metadata mức ảnh ra CSV (hỗ trợ cột mở rộng)."""
 
     output_csv.parent.mkdir(parents=True, exist_ok=True)
-    fieldnames = ["patient_id", "batch", "local_patient_id", "image_name", "image_path", "label"]
+    fieldnames = _ordered_metadata_fieldnames(rows)
+
     with output_csv.open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        writer.writerows(rows)
+        for row in rows:
+            writer.writerow({k: row.get(k, "") for k in fieldnames})
 
 
 def load_rows_csv(csv_path: Path) -> List[Dict[str, str]]:
@@ -312,3 +341,51 @@ def filter_records(records: Sequence[PatientRecord], patient_ids: Sequence[str])
 
     wanted = set(patient_ids)
     return [r for r in records if r.patient_id in wanted]
+
+
+REQUIRED_METADATA_KEYS = ("patient_id", "batch", "local_patient_id", "image_name", "image_path", "label")
+
+
+def _validate_row_schema(row: Dict[str, str], source: str = "unknown") -> None:
+    """Kiểm tra row có đủ cột bắt buộc cho pipeline train."""
+
+    missing = [k for k in REQUIRED_METADATA_KEYS if k not in row]
+    if missing:
+        raise ValueError(f"Row from {source} missing keys: {missing}")
+
+
+def merge_and_deduplicate_rows(*row_groups: Sequence[Dict[str, str]]) -> List[Dict[str, str]]:
+    """Gộp nhiều nguồn metadata và loại trùng theo (patient_id, image_path).
+
+    Mục tiêu:
+    - Cho phép nạp nhiều thư mục dữ liệu.
+    - Cho phép nạp thêm manifest CSV ngoài.
+    - Không để 1 ảnh bị lặp nhiều lần trong cùng metadata cuối.
+    """
+
+    merged: List[Dict[str, str]] = []
+    seen = set()
+    label_by_key: Dict[Tuple[str, str], str] = {}
+
+    for group_idx, rows in enumerate(row_groups):
+        source_name = f"group_{group_idx}"
+        for row in rows:
+            _validate_row_schema(row, source=source_name)
+
+            normalized = {str(k): "" if v is None else str(v).strip() for k, v in row.items()}
+            key = (normalized["patient_id"], normalized["image_path"])
+            label = normalized["label"]
+
+            if key in seen:
+                if label_by_key.get(key) != label:
+                    raise ValueError(
+                        f"Conflicting labels for duplicated image row key={key}: "
+                        f"old={label_by_key.get(key)} new={label}"
+                    )
+                continue
+
+            seen.add(key)
+            label_by_key[key] = label
+            merged.append(normalized)
+
+    return merged

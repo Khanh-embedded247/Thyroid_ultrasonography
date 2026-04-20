@@ -1,110 +1,51 @@
-# ThyUS2Path (Refactored)
+# ThyUS2Path
 
-Patient-level thyroid ultrasound diagnosis pipeline (benign/malignant) with fast baseline + MIL-ready structure.
+Pipeline chẩn đoán tuyến giáp (benign/malignant) theo hướng patient-level (1 bệnh nhân = nhiều ảnh).
 
-## Why this refactor
-- Original code mixed experiments and production scripts.
-- Patient-level dataset logic needed a strict pipeline to avoid leakage.
-- Batch ID collisions were possible (`batch1 patient 23` vs `batch2 patient 23`).
-
-This refactor fixes the structure and introduces a reproducible workflow.
-
-## New structure
-
+## 1) Cấu trúc chính
 ```text
 ThyUS2Path/
-  src/thyus2path/
-    data.py                 # build metadata, patient grouping, split by patient
-    dataset.py              # patient bag dataset + collate
-    model.py                # resnet18/34 + mean/max/attention pooling
-    engine.py               # train/eval loop
-    metrics.py              # patient-level metrics (AUC, AUPRC, sensitivity...)
-  scripts/
-    prepare_dataset.py      # build patient metadata + split files
+  data/
+    source_data/           # dữ liệu gốc nhiều nguồn
+    preprocess_data/       # CSV đã chuẩn hóa từng nguồn
+    main/
+      main_manifest.csv    # CSV chính để train
+  src/thyus2path/          # mã lõi (core), KHÔNG chạy trực tiếp
+  scripts/                 # file chạy (entry points)
+    step1_data/            # bước xử lý dữ liệu
     train_patient_baseline.py
     evaluate_patient.py
     infer_patient.py
-  legacy/                   # old notebooks/scripts kept unchanged
-  configs/train_baseline.yaml
-  train.py                  # wrapper -> scripts/train_patient_baseline.py
-  infer.py                  # wrapper -> scripts/infer_patient.py
 ```
 
-## Critical data fix
-Patient ID is now global:
+## 2) `src` và `scripts` khác nhau thế nào?
+- `src/thyus2path/*`: lớp/hàm lõi (`data`, `dataset`, `model`, `engine`, `metrics`).
+- `scripts/*.py`: file chạy thực tế, import hàm từ `src` để dùng.
 
-```text
-patient_id = "{batch_name}:{local_patient_id}"
-```
-
-This prevents cross-batch collisions and label conflicts.
-
-## Quickstart
-
-### 1) Build metadata and patient splits
-
+## 3) Thứ tự chạy chuẩn
 ```bash
-cd ThyUS2Path
-python scripts/prepare_dataset.py \
-  --data-root ./data \
-  --output-dir ./data/processed \
-  --test-size 0.1 \
-  --k-folds 5 \
-  --seed 2026
+python scripts/step1_data/01_process_batch_pathology.py
+python scripts/step1_data/02_process_folder_binary.py
+python scripts/step1_data/03_process_archive_weak.py
+python scripts/step1_data/04_merge_to_main.py
+python scripts/train_patient_baseline.py
 ```
 
-Outputs:
-- `data/processed/patient_images.csv`
-- `data/processed/patients.csv`
-- `data/processed/splits/test_patients.csv`
-- `data/processed/splits/fold_{i}_train_patients.csv`
-- `data/processed/splits/fold_{i}_val_patients.csv`
+## 4) Tune tham số train ở đâu?
+Mở file `scripts/train_patient_baseline.py`, sửa khối `DEFAULTS`.
 
-### 2) Train baseline (patient-level)
+Ví dụ các tham số chính:
+- `pooling`: `mean` / `max` / `attention`
+- `backbone`: `resnet18` / `resnet34`
+- `epochs`, `lr`, `batch_size`, `weight_decay`
+- `k_folds`, `test_size`, `threshold`
 
+Sau khi sửa, chạy đúng 1 lệnh:
 ```bash
-python train.py \
-  --metadata-csv ./data/processed/patient_images.csv \
-  --split-dir ./data/processed/splits \
-  --fold 0 \
-  --backbone resnet18 \
-  --pooling mean \
-  --epochs 20 \
-  --batch-size 4 \
-  --threshold 0.5
+python scripts/train_patient_baseline.py
 ```
 
-### 3) Evaluate checkpoint
-
+## 5) Chạy toàn bộ A -> Z bằng 1 lệnh
 ```bash
-python scripts/evaluate_patient.py \
-  --checkpoint ./results_refactored/fold_0_resnet18_mean/best.pt \
-  --metadata-csv ./data/processed/patient_images.csv \
-  --patient-ids-csv ./data/processed/splits/test_patients.csv
+bash run_all.sh
 ```
-
-### 4) Infer one patient folder
-
-```bash
-python infer.py \
-  --checkpoint ./results_refactored/fold_0_resnet18_mean/best.pt \
-  --images-dir ./data/batch1_image/dataset_patient_x
-```
-
-## Metrics (patient-level)
-- AUROC
-- AUPRC
-- Accuracy
-- Sensitivity (Recall)
-- Specificity
-- F1
-- Confusion components (TP/TN/FP/FN)
-
-## Legacy
-Old files are kept in `legacy/`:
-- `train_legacy.py`
-- `infer_legacy.py`
-- `test_gui_legacy.py`
-- `script_legacy.py`
-- `script_legacy.ipynb`
-- `script_x_legacy.ipynb`

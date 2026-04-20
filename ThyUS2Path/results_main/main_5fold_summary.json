@@ -1,0 +1,277 @@
+{
+  "config": {
+    "backbone": "resnet34",
+    "pooling": "mean",
+    "epochs": 20,
+    "lr": 0.0001,
+    "weight_decay": 0.0001,
+    "batch_size": 4,
+    "image_size": 224,
+    "threshold": 0.5,
+    "k_folds": 5,
+    "test_size": 0.1,
+    "fold_range": [
+      0,
+      4
+    ],
+    "seed": 2026
+  },
+  "manifest_info": {
+    "base_csv": "/home/khanh247/deep_learning/ThyUS2Path/data/main/main_manifest.csv",
+    "train_csv": "/home/khanh247/deep_learning/ThyUS2Path/data/main/main_manifest_train_main.csv",
+    "profile": "train_main",
+    "rows_total_before": 15907,
+    "rows_total_after": 15558,
+    "label_source_before": {
+      "folder_binary": 7058,
+      "pathology": 8500,
+      "tirads_weak": 349
+    },
+    "label_source_after": {
+      "folder_binary": 7058,
+      "pathology": 8500
+    },
+    "dataset_name_after": {
+      "batch1_image": 6005,
+      "batch2_image": 2495,
+      "classification_image": 7058
+    }
+  },
+  "fold_results": [
+    {
+      "fold": 0,
+      "run_dir": "/home/khanh247/deep_learning/ThyUS2Path/results_main/fold_0_resnet34_mean",
+      "ckpt_path": "/home/khanh247/deep_learning/ThyUS2Path/results_main/fold_0_resnet34_mean/best.pt",
+      "val_metrics": {
+        "auc": 0.8901026983487716,
+        "auprc": 0.9407577873585676,
+        "accuracy": 0.7983134223471539,
+        "precision": 0.8778280542986425,
+        "recall_sensitivity": 0.812565445026178,
+        "specificity": 0.7692307692307693,
+        "f1": 0.843936922240348,
+        "tp": 776.0,
+        "tn": 360.0,
+        "fp": 108.0,
+        "fn": 179.0,
+        "loss": 0.3187736278146041
+      },
+      "test_metrics": {
+        "auc": 0.9041727140783744,
+        "auprc": 0.9489843046121346,
+        "accuracy": 0.8265822784810126,
+        "precision": 0.8830409356725146,
+        "recall_sensitivity": 0.8547169811320755,
+        "specificity": 0.7692307692307693,
+        "f1": 0.8686481303930967,
+        "tp": 453.0,
+        "tn": 200.0,
+        "fp": 60.0,
+        "fn": 77.0,
+        "loss": 0.2909966500531931
+      }
+    },
+    {
+      "fold": 1,
+      "run_dir": "/home/khanh247/deep_learning/ThyUS2Path/results_main/fold_1_resnet34_mean",
+      "ckpt_path": "/home/khanh247/deep_learning/ThyUS2Path/results_main/fold_1_resnet34_mean/best.pt",
+      "val_metrics": {
+        "auc": 0.8876812000403601,
+        "auprc": 0.9417269061159115,
+        "accuracy": 0.7876230661040787,
+        "precision": 0.9045848822800495,
+        "recall_sensitivity": 0.7643979057591623,
+        "specificity": 0.8351177730192719,
+        "f1": 0.8286038592508513,
+        "tp": 730.0,
+        "tn": 390.0,
+        "fp": 77.0,
+        "fn": 225.0,
+        "loss": 0.34922492823147333
+      },
+      "test_metrics": {
+        "auc": 0.8911465892597968,
+        "auprc": 0.9399975205465471,
+        "accuracy": 0.7911392405063291,
+        "precision": 0.8941684665226782,
+        "recall_sensitivity": 0.7811320754716982,
+        "specificity": 0.8115384615384615,
+        "f1": 0.8338368580060423,
+        "tp": 414.0,
+        "tn": 211.0,
+        "fp": 49.0,
+        "fn": 116.0,
+        "loss": 0.33746427308503796
+      }
+    },
+    {
+      "fold": 2,
+      "run_dir": "/home/khanh247/deep_learning/ThyUS2Path/results_main/fold_2_resnet34_mean",
+      "ckpt_path": "/home/khanh247/deep_learning/ThyUS2Path/results_main/fold_2_resnet34_mean/best.pt",
+      "val_metrics": {
+        "auc": 0.9020067939504692,
+        "auprc": 0.947440528359422,
+        "accuracy": 0.8213783403656821,
+        "precision": 0.8740661686232657,
+        "recall_sensitivity": 0.8575916230366493,
+        "specificity": 0.7473233404710921,
+        "f1": 0.8657505285412262,
+        "tp": 819.0,
+        "tn": 349.0,
+        "fp": 118.0,
+        "fn": 136.0,
+        "loss": 0.26930095667732384
+      },
+      "test_metrics": {
+        "auc": 0.8979245283018867,
+        "auprc": 0.9432774295219171,
+        "accuracy": 0.8177215189873418,
+        "precision": 0.8587360594795539,
+        "recall_sensitivity": 0.8716981132075472,
+        "specificity": 0.7076923076923077,
+        "f1": 0.8651685393258427,
+        "tp": 462.0,
+        "tn": 184.0,
+        "fp": 76.0,
+        "fn": 68.0,
+        "loss": 0.2769118242188286
+      }
+    },
+    {
+      "fold": 3,
+      "run_dir": "/home/khanh247/deep_learning/ThyUS2Path/results_main/fold_3_resnet34_mean",
+      "ckpt_path": "/home/khanh247/deep_learning/ThyUS2Path/results_main/fold_3_resnet34_mean/best.pt",
+      "val_metrics": {
+        "auc": 0.8964987611690977,
+        "auprc": 0.9431749784298664,
+        "accuracy": 0.8087201125175809,
+        "precision": 0.8902857142857142,
+        "recall_sensitivity": 0.8157068062827225,
+        "specificity": 0.7944325481798715,
+        "f1": 0.8513661202185792,
+        "tp": 779.0,
+        "tn": 371.0,
+        "fp": 96.0,
+        "fn": 176.0,
+        "loss": 0.289882256104055
+      },
+      "test_metrics": {
+        "auc": 0.9061248185776488,
+        "auprc": 0.9517705304679696,
+        "accuracy": 0.8240506329113924,
+        "precision": 0.8871287128712871,
+        "recall_sensitivity": 0.8452830188679246,
+        "specificity": 0.7807692307692308,
+        "f1": 0.8657004830917875,
+        "tp": 448.0,
+        "tn": 203.0,
+        "fp": 57.0,
+        "fn": 82.0,
+        "loss": 0.2684794317170737
+      }
+    },
+    {
+      "fold": 4,
+      "run_dir": "/home/khanh247/deep_learning/ThyUS2Path/results_main/fold_4_resnet34_mean",
+      "ckpt_path": "/home/khanh247/deep_learning/ThyUS2Path/results_main/fold_4_resnet34_mean/best.pt",
+      "val_metrics": {
+        "auc": 0.8940357067503445,
+        "auprc": 0.9447875852351352,
+        "accuracy": 0.8163265306122449,
+        "precision": 0.8674443266171792,
+        "recall_sensitivity": 0.8574423480083857,
+        "specificity": 0.7323340471092077,
+        "f1": 0.8624143384290985,
+        "tp": 818.0,
+        "tn": 342.0,
+        "fp": 125.0,
+        "fn": 136.0,
+        "loss": 0.33843633473232254
+      },
+      "test_metrics": {
+        "auc": 0.9023802612481858,
+        "auprc": 0.9474634308736629,
+        "accuracy": 0.8291139240506329,
+        "precision": 0.8705440900562852,
+        "recall_sensitivity": 0.8754716981132076,
+        "specificity": 0.7346153846153847,
+        "f1": 0.8730009407337724,
+        "tp": 464.0,
+        "tn": 191.0,
+        "fp": 69.0,
+        "fn": 66.0,
+        "loss": 0.32674859514123983
+      }
+    }
+  ],
+  "aggregate": {
+    "val_mean_std": {
+      "auc": {
+        "mean": 0.8940650320518087,
+        "std": 0.005600198187771601
+      },
+      "auprc": {
+        "mean": 0.9435775570997805,
+        "std": 0.0026421958237511185
+      },
+      "accuracy": {
+        "mean": 0.8064722943893481,
+        "std": 0.013658417409000445
+      },
+      "precision": {
+        "mean": 0.8828418292209702,
+        "std": 0.014725870309753123
+      },
+      "recall_sensitivity": {
+        "mean": 0.8215408256226195,
+        "std": 0.038627988016572405
+      },
+      "specificity": {
+        "mean": 0.7756876956020425,
+        "std": 0.0406480964430729
+      },
+      "f1": {
+        "mean": 0.8504143537360207,
+        "std": 0.014981309507149078
+      },
+      "loss": {
+        "mean": 0.31312362071195576,
+        "std": 0.033303706204735044
+      }
+    },
+    "test_mean_std": {
+      "auc": {
+        "mean": 0.9003497822931785,
+        "std": 0.005972213057985684
+      },
+      "auprc": {
+        "mean": 0.9462986432044462,
+        "std": 0.004672872152145997
+      },
+      "accuracy": {
+        "mean": 0.8177215189873418,
+        "std": 0.015451336222447713
+      },
+      "precision": {
+        "mean": 0.8787236529204638,
+        "std": 0.014091090895965013
+      },
+      "recall_sensitivity": {
+        "mean": 0.8456603773584906,
+        "std": 0.03812067926015026
+      },
+      "specificity": {
+        "mean": 0.7607692307692308,
+        "std": 0.04046694903865425
+      },
+      "f1": {
+        "mean": 0.8612709903101083,
+        "std": 0.015648137610077186
+      },
+      "loss": {
+        "mean": 0.30012015484307464,
+        "std": 0.030523176890414942
+      }
+    }
+  }
+}

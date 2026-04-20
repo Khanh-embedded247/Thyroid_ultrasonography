@@ -1,71 +1,46 @@
 # DATA_FLOW
 
-## 1) End-to-end flow (A -> Z)
+## 1) Luồng chạy hiện tại (đã rút gọn)
 
 ```text
-Raw data (data/batch*_image/)
-  └─ dataset/*.Jpg + *label*.csv
-        |
-        v
-scripts/prepare_dataset.py
-  ├─ Build image metadata: data/processed/patient_images.csv
-  ├─ Build patient table:  data/processed/patients.csv
-  └─ Build split files:    data/processed/splits/*.csv
-        |
-        v
+data/source_data/*
+  -> scripts/step1_data/01_process_batch_pathology.py
+  -> scripts/step1_data/02_process_folder_binary.py
+  -> scripts/step1_data/03_process_archive_weak.py (tùy chọn)
+  => data/preprocess_data/*.csv (mỗi nguồn 1 file)
+
+scripts/step1_data/04_merge_to_main.py
+  => data/main/main_manifest.csv (file duy nhất để train)
+
 scripts/train_patient_baseline.py
-  ├─ Load metadata + split (patient-level)
-  ├─ Build bag dataset/dataloader
-  ├─ Train model (mean/max/attention pooling)
-  └─ Save checkpoint + report
-        |
-        v
-scripts/evaluate_patient.py
-  ├─ Load checkpoint
-  ├─ Evaluate on patient list CSV
-  └─ Save patient-level metrics + predictions
-        |
-        v
-scripts/infer_patient.py
-  └─ Infer one patient folder (many images -> one prediction)
+  -> đọc main_manifest.csv
+  -> gom theo patient_id (bag nhiều ảnh)
+  -> auto split patient-level (train/val/test)
+  -> train model (ResNet + pooling)
+  => results_refactored/fold_x_backbone_pooling/
+       - best.pt
+       - report.json
+       - test_predictions.csv
 ```
 
-## 2) Data format after prepare step
+## 2) Ý nghĩa `src` và `scripts`
+- `src/thyus2path/data.py`: xử lý row CSV, group patient, split theo patient.
+- `src/thyus2path/dataset.py`: đổi PatientRecord thành tensor bag `[N,C,H,W]`, collate/padding thành batch.
+- `src/thyus2path/model.py`: ResNet encoder + pooling (`mean/max/attention`) + classifier.
+- `src/thyus2path/engine.py`: train loop, evaluate, save checkpoint/report.
+- `src/thyus2path/metrics.py`: tính AUC, AUPRC, accuracy, sensitivity, specificity...
 
-### `data/processed/patient_images.csv`
-- `patient_id`: global id (`batch_name:local_patient_id`)
-- `batch`
-- `local_patient_id`
-- `image_name`
-- `image_path`
-- `label`
+- `scripts/*.py`: điểm chạy thực tế, gọi lại các module lõi trong `src`.
 
-### `data/processed/patients.csv`
-- one row per patient
-- `patient_id`, `label`, `num_images`
+## 3) Input/Output của bước train
+Input chính:
+- `data/main/main_manifest.csv`
+- Cột bắt buộc: `patient_id,batch,local_patient_id,image_name,image_path,label`
 
-### `data/processed/splits/*.csv`
-- `test_patients.csv`
-- `fold_{k}_train_patients.csv`
-- `fold_{k}_val_patients.csv`
+Output chính:
+- `results_refactored/fold_0_resnet18_mean/best.pt`
+- `results_refactored/fold_0_resnet18_mean/report.json`
+- `results_refactored/fold_0_resnet18_mean/test_predictions.csv`
 
-All split files are patient-level only, so no leakage between train/val/test.
-
-## 3) Code reading order (recommended)
-
-1. `scripts/prepare_dataset.py`
-2. `src/thyus2path/data.py`
-3. `src/thyus2path/dataset.py`
-4. `src/thyus2path/model.py`
-5. `src/thyus2path/engine.py`
-6. `scripts/train_patient_baseline.py`
-7. `scripts/evaluate_patient.py`
-8. `scripts/infer_patient.py`
-9. `run_all.sh`
-
-## 4) Why this order
-
-- First understand how metadata and split are built.
-- Then understand how one patient becomes one model sample.
-- Then see model aggregation (mean/max/attention).
-- Finally see training/evaluation/inference entrypoints.
+## 4) Vì sao split train/val/test ở mức patient?
+Vì một bệnh nhân có nhiều ảnh. Nếu split theo ảnh sẽ rò rỉ dữ liệu (cùng bệnh nhân xuất hiện cả train và val/test), metric sẽ ảo.

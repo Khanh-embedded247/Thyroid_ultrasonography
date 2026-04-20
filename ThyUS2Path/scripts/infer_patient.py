@@ -54,7 +54,7 @@ def main() -> None:
     device = _device_from_arg(args.device)
 
     # 1) Nạp checkpoint và lấy cấu hình model đã train.
-    checkpoint = torch.load(args.checkpoint, map_location=device)
+    checkpoint = torch.load(args.checkpoint, map_location=device, weights_only=False)
     meta = checkpoint.get("meta", {})
 
     image_size = int(meta.get("image_size", 224))

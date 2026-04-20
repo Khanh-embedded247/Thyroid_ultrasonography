@@ -35,7 +35,7 @@ class PILToFloatTensorNoNumpy:
         channels = len(img.getbands())  # RGB -> 3
 
         # Đọc raw bytes của ảnh và reshape về [H, W, C].
-        byte_tensor = torch.frombuffer(img.tobytes(), dtype=torch.uint8).clone()
+        byte_tensor = torch.frombuffer(bytearray(img.tobytes()), dtype=torch.uint8)
         tensor = byte_tensor.view(height, width, channels).permute(2, 0, 1).contiguous()
 
         # Chuẩn hóa về [0, 1] tương đương ToTensor().

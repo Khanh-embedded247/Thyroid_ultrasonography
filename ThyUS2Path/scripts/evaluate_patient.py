@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import annotations
 
-"""Bước 3: Đánh giá checkpoint trên một danh sách bệnh nhân bất kỳ."""
+"""Bước 3: Đánh giá checkpoint trên một danh sách bệnh nhân."""
 
 import argparse
 import csv
@@ -23,11 +23,14 @@ from thyus2path.model import PatientClassifier
 
 
 def parse_args() -> argparse.Namespace:
-    """Tham số cho bước evaluate."""
+    """Tham số cho bước evaluate.
+
+    Mặc định metadata đã trỏ vào file chính: data/main/main_manifest.csv
+    """
 
     parser = argparse.ArgumentParser(description="Evaluate checkpoint on patient split")
     parser.add_argument("--checkpoint", type=Path, required=True)
-    parser.add_argument("--metadata-csv", type=Path, default=ROOT / "data" / "processed" / "patient_images.csv")
+    parser.add_argument("--metadata-csv", type=Path, default=ROOT / "data" / "main" / "main_manifest.csv")
     parser.add_argument("--patient-ids-csv", type=Path, required=True)
     parser.add_argument("--threshold", type=float, default=0.5)
     parser.add_argument("--num-workers", type=int, default=4)
@@ -38,8 +41,6 @@ def parse_args() -> argparse.Namespace:
 
 
 def _device_from_arg(device_arg: str) -> torch.device:
-    """Chọn thiết bị chạy theo tham số."""
-
     if device_arg == "cuda":
         return torch.device("cuda")
     if device_arg == "cpu":
@@ -51,8 +52,7 @@ def main() -> None:
     args = parse_args()
     device = _device_from_arg(args.device)
 
-    # 1) Nạp checkpoint + metadata của lần train.
-    checkpoint = torch.load(args.checkpoint, map_location=device)
+    checkpoint = torch.load(args.checkpoint, map_location=device, weights_only=False)
     meta = checkpoint.get("meta", {})
 
     model = PatientClassifier(
@@ -62,7 +62,6 @@ def main() -> None:
     ).to(device)
     model.load_state_dict(checkpoint["model_state"])
 
-    # 2) Tạo dataset evaluate theo danh sách patient_id đầu vào.
     rows = load_rows_csv(args.metadata_csv)
     records = rows_to_patient_records(rows)
     patient_ids = load_patient_ids(args.patient_ids_csv)
@@ -71,7 +70,6 @@ def main() -> None:
     ds = PatientBagDataset(records_eval, image_size=int(meta.get("image_size", 224)), augment=False)
     loader = DataLoader(ds, batch_size=1, shuffle=False, num_workers=args.num_workers, collate_fn=patient_bag_collate)
 
-    # 3) Chạy evaluate ở mức bệnh nhân và lưu kết quả.
     criterion = torch.nn.BCEWithLogitsLoss()
     _, metrics, pred_rows = evaluate(model, loader, criterion, device, args.threshold)
 
